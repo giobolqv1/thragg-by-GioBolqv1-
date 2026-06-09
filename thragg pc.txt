@@ -1,0 +1,2002 @@
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local LocalPlayer = Players.LocalPlayer
+local StarterGui = game:GetService("StarterGui")
+local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
+local Debris = game:GetService("Debris")
+local TweenService = game:GetService("TweenService")
+local TextChatService = game:GetService("TextChatService")
+local Chat = game:GetService("Chat")
+
+-- Specific Anti-Ban Execution for Da Hood
+if game.PlaceId == 2788229376 then
+    loadstring(game:HttpGet("https://pastebin.com/raw/JFrBJBZw"))()
+end
+
+getgenv().FPDH = workspace.FallenPartsDestroyHeight
+
+-- Notification System Load
+loadstring(game:HttpGet('https://raw.githubusercontent.com/BocusLuke/UI/main/STX/Module.Lua'))()
+local v1 = loadstring(game:HttpGet('https://raw.githubusercontent.com/BocusLuke/UI/main/STX/Client.Lua'))()
+
+-- Sequence Notifications
+v1:Notify({
+	Title = "made by GioBolqv1",
+	Description = "follow me on Roblox plz",
+}, {
+	OutlineColor = Color3.fromRGB(80, 80, 80),
+	Time = 6,
+	Type = 'default',
+})
+
+task.delay(6, function()
+	v1:Notify({
+		Title = "I am conquesting it",
+		Description = "",
+	}, {
+		OutlineColor = Color3.fromRGB(80, 80, 80),
+		Time = 1,
+		Type = 'default',
+	})
+end)
+
+-- UI Setup (Conquest Dark Theme with Low-UNC Executor Fallback)
+local gui = Instance.new("ScreenGui")
+gui.Name = "CustomClientUI"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local targetParent = CoreGui
+local coreGuiSuccess, _ = pcall(function()
+    gui.Parent = CoreGui
+end)
+if not coreGuiSuccess then
+    targetParent = LocalPlayer:WaitForChild("PlayerGui")
+    gui.Parent = targetParent
+end
+
+-- Global Variables for Control
+local buttonsLocked = false
+local buttonsHidden = false
+local voicelinesEnabled = true
+local shiftlockEnabled = false
+local smallButtonsList = {}
+
+-- --- UPDATED PERFECT DRAGGING LOGIC WITH PC MOUSE SUPPORT ---
+local function makeSmartDraggable(button, callback, isSmallButton)
+    local dragging, dragInput, dragStart, startPos
+
+    button.InputBegan:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
+            if isSmallButton and buttonsLocked then
+                local connection
+                connection = input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        connection:Disconnect()
+                        if callback then callback() end
+                    end
+                end)
+                return
+            end
+            
+            dragging = true
+            dragStart = input.Position
+            startPos = button.Position
+            
+            local connection
+            connection = input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    if not dragging then return end
+                    dragging = false
+                    connection:Disconnect()
+                    local delta = input.Position - dragStart
+                    if delta.Magnitude < 6 then
+                        if callback then callback() end
+                    end
+                end
+            end)
+        end
+    end)
+
+    button.InputChanged:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            button.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+-- MAIN TOGGLE BUTTON (Renamed to Thragg: OFF) - EXCEPTED FROM POSITION MODIFICATION
+local mobileFlyToggle = Instance.new("ImageButton")
+mobileFlyToggle.Size = UDim2.new(0, 100, 0, 45)
+mobileFlyToggle.Position = UDim2.new(0.95, -120, 0.45, 0)
+mobileFlyToggle.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mobileFlyToggle.Image = "rbxthumb://type=Asset&id=92738027351882&w=150&h=150"
+mobileFlyToggle.ScaleType = Enum.ScaleType.Stretch
+mobileFlyToggle.Active = true
+mobileFlyToggle.BorderSizePixel = 0
+mobileFlyToggle.Parent = gui
+
+local flyText = Instance.new("TextLabel")
+flyText.Size = UDim2.new(1, 0, 1, 0)
+flyText.BackgroundTransparency = 1
+flyText.Text = "Thragg: OFF"
+flyText.TextColor3 = Color3.new(1, 1, 1)
+flyText.Font = Enum.Font.Fantasy
+flyText.TextSize = 14
+flyText.ZIndex = 2
+flyText.Parent = mobileFlyToggle
+
+-- Main Button Text Stroke
+local flyTextStroke = Instance.new("UIStroke")
+flyTextStroke.Thickness = 1.5
+flyTextStroke.Color = Color3.fromRGB(0, 0, 0)
+flyTextStroke.Parent = flyText
+
+local flyCorner = Instance.new("UICorner")
+flyCorner.CornerRadius = UDim.new(0.2, 0)
+flyCorner.Parent = mobileFlyToggle
+
+local flyStroke = Instance.new("UIStroke")
+flyStroke.Thickness = 2
+flyStroke.Color = Color3.fromRGB(50, 50, 50)
+flyStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+flyStroke.Parent = mobileFlyToggle
+
+-- SETTING BUTTON (Left Side)
+local settingButton = Instance.new("ImageButton")
+settingButton.Name = "SettingButton"
+settingButton.Size = UDim2.new(0, 45, 0, 45)
+settingButton.Position = UDim2.new(0.05, -5, 0.45, -12)
+settingButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+settingButton.Image = "rbxthumb://type=Asset&id=104077005427988&w=150&h=150"
+settingButton.ScaleType = Enum.ScaleType.Stretch
+settingButton.Active = true
+settingButton.BorderSizePixel = 0
+settingButton.Visible = false
+settingButton.Parent = gui
+
+local settingCorner = Instance.new("UICorner")
+settingCorner.CornerRadius = UDim.new(0.3, 0)
+settingCorner.Parent = settingButton
+
+local settingStroke = Instance.new("UIStroke")
+settingStroke.Thickness = 2
+settingStroke.Color = Color3.fromRGB(50, 50, 50)
+settingStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+settingStroke.Parent = settingButton
+
+-- settings mini GUI (taller to fit 3 rows + nudge area)
+local settingsGui = Instance.new("Frame")
+settingsGui.Size = UDim2.new(0, 210, 0, 185)
+settingsGui.Position = UDim2.new(1, 10, 0, 0)
+settingsGui.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+settingsGui.BorderSizePixel = 0
+settingsGui.Visible = false
+settingsGui.Parent = settingButton
+
+local settingsCorner = Instance.new("UICorner")
+settingsCorner.CornerRadius = UDim.new(0.1, 0)
+settingsCorner.Parent = settingsGui
+
+local settingsStrokeBorder = Instance.new("UIStroke")
+settingsStrokeBorder.Thickness = 2
+settingsStrokeBorder.Color = Color3.fromRGB(60, 60, 60)
+settingsStrokeBorder.Parent = settingsGui
+
+-- Row 1: lock buttons (left) | camera follow (right) — centred
+local lockBtn = Instance.new("TextButton")
+lockBtn.Size = UDim2.new(0, 95, 0, 30)
+lockBtn.Position = UDim2.new(0, 7, 0, 8)
+lockBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+lockBtn.TextColor3 = Color3.new(1, 1, 1)
+lockBtn.Font = Enum.Font.Fantasy
+lockBtn.TextSize = 12
+lockBtn.Text = "lock buttons"
+lockBtn.Parent = settingsGui
+
+local lockCorner = Instance.new("UICorner")
+lockCorner.CornerRadius = UDim.new(0.2, 0)
+lockCorner.Parent = lockBtn
+
+-- Camera Follow Toggle Button
+local cameraFollowOn = true
+local camFollowBtn = Instance.new("TextButton")
+camFollowBtn.Size = UDim2.new(0, 95, 0, 30)
+camFollowBtn.Position = UDim2.new(0, 107, 0, 8)
+camFollowBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+camFollowBtn.TextColor3 = Color3.new(1, 1, 1)
+camFollowBtn.Font = Enum.Font.Fantasy
+camFollowBtn.TextSize = 10
+camFollowBtn.Text = "camera follow: on"
+camFollowBtn.Parent = settingsGui
+
+local camFollowCorner = Instance.new("UICorner")
+camFollowCorner.CornerRadius = UDim.new(0.2, 0)
+camFollowCorner.Parent = camFollowBtn
+
+camFollowBtn.MouseButton1Click:Connect(function()
+    cameraFollowOn = not cameraFollowOn
+    camFollowBtn.Text = cameraFollowOn and "camera follow: on" or "camera follow: off"
+end)
+
+-- Row 2: hide buttons (left) | voicelines on/off (right) — centred
+local hideBtn = Instance.new("TextButton")
+hideBtn.Size = UDim2.new(0, 95, 0, 30)
+hideBtn.Position = UDim2.new(0, 7, 0, 43)
+hideBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+hideBtn.TextColor3 = Color3.new(1, 1, 1)
+hideBtn.Font = Enum.Font.Fantasy
+hideBtn.TextSize = 10
+hideBtn.TextWrapped = true
+hideBtn.Text = "hide buttons"
+hideBtn.Parent = settingsGui
+
+local hideBtnCorner = Instance.new("UICorner")
+hideBtnCorner.CornerRadius = UDim.new(0.2, 0)
+hideBtnCorner.Parent = hideBtn
+
+local settingsVoicelinesBtn = Instance.new("TextButton")
+settingsVoicelinesBtn.Size = UDim2.new(0, 95, 0, 30)
+settingsVoicelinesBtn.Position = UDim2.new(0, 107, 0, 43)
+settingsVoicelinesBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+settingsVoicelinesBtn.TextColor3 = Color3.new(1, 1, 1)
+settingsVoicelinesBtn.Font = Enum.Font.Fantasy
+settingsVoicelinesBtn.TextSize = 9
+settingsVoicelinesBtn.TextWrapped = true
+settingsVoicelinesBtn.Text = "voicelines: on"
+settingsVoicelinesBtn.Parent = settingsGui
+
+local settingsVoicelinesBtnCorner = Instance.new("UICorner")
+settingsVoicelinesBtnCorner.CornerRadius = UDim.new(0.2, 0)
+settingsVoicelinesBtnCorner.Parent = settingsVoicelinesBtn
+
+-- Row 3: shiftlock (Resized to fill horizontal space and stays gray)
+local shiftlockBtn = Instance.new("TextButton")
+shiftlockBtn.Size = UDim2.new(0, 195, 0, 30)
+shiftlockBtn.Position = UDim2.new(0, 7, 0, 78)
+shiftlockBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+shiftlockBtn.TextColor3 = Color3.new(1, 1, 1)
+shiftlockBtn.Font = Enum.Font.Fantasy
+shiftlockBtn.TextSize = 10
+shiftlockBtn.TextWrapped = true
+shiftlockBtn.Text = "shiftlock: off"
+shiftlockBtn.Parent = settingsGui
+
+local shiftlockBtnCorner = Instance.new("UICorner")
+shiftlockBtnCorner.CornerRadius = UDim.new(0.2, 0)
+shiftlockBtnCorner.Parent = shiftlockBtn
+
+shiftlockBtn.MouseButton1Click:Connect(function()
+    shiftlockEnabled = not shiftlockEnabled
+    shiftlockBtn.Text = shiftlockEnabled and "shiftlock: on" or "shiftlock: off"
+end)
+
+-- Nudge Buttons Container (Row 4, below Row 3)
+local nudgeContainer = Instance.new("Frame")
+nudgeContainer.Size = UDim2.new(0.9, 0, 0, 60)
+nudgeContainer.Position = UDim2.new(0.05, 0, 0, 117)
+nudgeContainer.BackgroundTransparency = 1
+nudgeContainer.Parent = settingsGui
+
+local function createNudgeBtn(text, pos)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 25, 0, 25)
+    btn.Position = pos
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.Fantasy
+    btn.TextSize = 16
+    btn.Text = text
+    btn.Parent = nudgeContainer
+    local cr = Instance.new("UICorner")
+    cr.CornerRadius = UDim.new(0.2, 0)
+    cr.Parent = btn
+    return btn
+end
+
+local btnUp = createNudgeBtn("↑", UDim2.new(0.5, -7, 0, -2))
+local btnDown = createNudgeBtn("↓", UDim2.new(0.5, -7, 0, 30))
+local btnLeft = createNudgeBtn("←", UDim2.new(0.5, -37, 0, 14))
+local btnRight = createNudgeBtn("→", UDim2.new(0.5, 23, 0, 14))
+
+local function nudgeAll(x, y)
+    for _, btn in ipairs(smallButtonsList) do
+        btn.Position = UDim2.new(
+            btn.Position.X.Scale, btn.Position.X.Offset + x,
+            btn.Position.Y.Scale, btn.Position.Y.Offset + y
+        )
+    end
+end
+
+btnUp.MouseButton1Click:Connect(function() nudgeAll(0, -5) end)
+btnDown.MouseButton1Click:Connect(function() nudgeAll(0, 5) end)
+btnLeft.MouseButton1Click:Connect(function() nudgeAll(-5, 0) end)
+btnRight.MouseButton1Click:Connect(function() nudgeAll(5, 0) end)
+
+lockBtn.MouseButton1Click:Connect(function()
+    buttonsLocked = not buttonsLocked
+    lockBtn.Text = buttonsLocked and "unlock buttons" or "lock buttons"
+end)
+
+-- mobileFlyOn forward-declared so hideBtn and the fly toggle both read the same upvalue
+local mobileFlyOn = false
+
+-- UI Component Containers declared early so hideBtn can reference them
+local buttonContainer = Instance.new("Frame")
+buttonContainer.Name = "ActionButtons"
+buttonContainer.Size = UDim2.new(0, 250, 0, 200)
+buttonContainer.Position = UDim2.new(1, -295, 1, -232)
+buttonContainer.BackgroundTransparency = 1
+buttonContainer.Visible = false
+buttonContainer.Parent = gui
+
+local topButtonContainer = Instance.new("Frame")
+topButtonContainer.Name = "UtilityButtons"
+topButtonContainer.Size = UDim2.new(0, 200, 0, 100)
+topButtonContainer.Position = UDim2.new(1, -205, 0, 8)
+topButtonContainer.BackgroundTransparency = 1
+topButtonContainer.Visible = false
+topButtonContainer.Parent = gui
+
+-- Hide button: hides/shows action containers, always respects mobileFlyOn
+hideBtn.MouseButton1Click:Connect(function()
+    buttonsHidden = not buttonsHidden
+    hideBtn.Text = buttonsHidden and "show buttons" or "hide buttons"
+    if buttonsHidden then
+        buttonContainer.Visible = false
+        topButtonContainer.Visible = false
+    else
+        -- Only show if fly is currently on
+        if mobileFlyOn then
+            buttonContainer.Visible = true
+            topButtonContainer.Visible = true
+        end
+    end
+end)
+
+settingsVoicelinesBtn.MouseButton1Click:Connect(function()
+    voicelinesEnabled = not voicelinesEnabled
+    settingsVoicelinesBtn.Text = voicelinesEnabled and "voicelines: on" or "voicelines: off"
+end)
+
+makeSmartDraggable(settingButton, function()
+    settingsGui.Visible = not settingsGui.Visible
+end, false)
+
+-- Variables
+local walkSpeed = 10
+local cframeWSOn = true
+local brightnessOn = false
+local reachOn = false
+local noclipOn = false
+local noclipLoopConnection = nil
+local killOn = false
+local reachedPlayers = {}
+local originalProps = {}
+local currentTarget = nil
+local originalCameraSubject = nil
+local currentTargetDeathConnection = nil
+local lastTargetPosition = nil
+local originalWalkSpeed = 16
+local originalJumpPower = 50
+local reachStateBeforeKill = false
+-- mobileFlyOn already declared above
+local mobileFlyLoopConnection = nil
+local mobileFlyInvisiblePart = nil
+local previousNoclipState = false
+local baseFlySpeed = (((65 / 3) * 1.3) * 1.5) / 1.25
+local currentFlyMultiplier = 1.0
+local isLanding = false
+local landingCooldown = false
+local currentStage = 1
+local stage3TimeElapsed = 0
+local totalFlightTimeElapsed = 0
+local hasPerformedInitialGhostLand = false
+local groundLandingEnabled = true
+local flingEnabled = false
+local flingConnection = nil
+
+-- Dynamic Smooth Camera Shake Management for Stage 3
+local currentStage3ShakeIntensity = 0
+local targetStage3ShakeIntensity = 0
+
+-- SNEAK ATTACK / SLAP SYSTEM VARIABLES
+local oliverTarget = nil
+local oliverHighlight = nil
+local isSlapping = false
+local oliverSlapToggled = false
+
+-- Height Tracking for Landing
+local descentStartHeight = nil
+local MIN_DESCENT_FOR_LANDING = 5
+
+-- Speed modifier
+local flySpeedMode = 0
+local FLY_SPEED_MODIFIERS = {[0] = 1.0, [1] = 0.5, [2] = 1.5}
+local FLY_SPEED_MODE_NAMES = {[0] = "Normal", [1] = "Slow", [2] = "Fast"}
+local ESP_COLOR = Color3.fromRGB(0, 255, 0)
+
+-- Fly Animation and State Management
+local flyCurrentState = nil
+local flyBodyGyro, flyBodyVelocity
+local flyConnections = {}
+local flyTracks = {}
+local flyAnimTask = nil
+
+-- Animation IDs
+local IDLE_ID = "rbxassetid://73559727995551"
+local WALK_1_ID = "rbxassetid://92365791487740"
+local WALK_2_ID = "rbxassetid://114833664438028"
+local WALK_3_ID = "rbxassetid://114354347367406" -- Custom Loop managed for V1
+local WALK_3_V2_ID = "rbxassetid://99694231408564" -- V2 Fly Animation
+local WALK_3_V3_ID = "rbxassetid://101291673584393" -- V3 Fly Animation
+
+-- Fly Animation Version
+local flyAnimVersion = 1
+local FADE_TIME = 0.5
+local IDLE_FADE_TIME = 0.45
+local STAGE3_FADE_TIME = 0.5
+
+-- ATTACK_ANIMATION SETTINGS
+local ATTACK_ANIM_1_ID = "rbxassetid://99823081022996"
+local ATTACK_ANIM_2_ID = "rbxassetid://140101261765574"
+local ATTACK_ANIM_3_ID = "rbxassetid://123301931940870"
+local ATTACK_SPECIAL_ID = "rbxassetid://87725149616750"
+local ATTACK_STRIKE_ID = "rbxassetid://110979677723900"
+
+local SPECIAL_START_TIME = 2.2
+local SPECIAL_SPEED = 0
+local ATTACK_FADE_TIME = 0.3
+local ATTACK_STRIKE_FADE_OUT = 0.3
+local ATTACK_STRIKE_START_TIME = 3
+local ATTACK_STRIKE_SPEED = 6
+local ATTACK_FLY_SPEED_MULTIPLIER = 1.2
+
+-- SNEAK ATTACK / CUSTOM NEW ANIMATION IDs
+local SNEAK_ATTACK_ANIM_ID = "rbxassetid://82164568347012"
+local FOOL_ANIM_ID = "rbxassetid://98224569210479"
+local THRAXSANS_ANIM_ID = "rbxassetid://114354347367406"
+local KING_ANIM_ID = "rbxassetid://114354347367406"
+
+-- New Fly Idle Animation Options (Updated with V4, V5, and V6)
+local FLY_IDLE_OPTIONS = {
+    [1] = "rbxassetid://114708567078493",
+    [2] = "rbxassetid://115273213664137",
+    [3] = "rbxassetid://77845144494622",
+    [4] = "rbxassetid://105071182713474",
+    [5] = "rbxassetid://127593717003572",
+    [6] = "rbxassetid://116157665289694"
+}
+local flyIdleVersion = 1
+
+-- Toggle States for Extra Animations
+local foolToggled = false
+local thraxsaToggled = false
+local kingToggled = false
+local chooseDeathToggled = false
+
+local foolTrack = nil
+local thraxsaTrack = nil
+local kingTrack = nil
+local chooseDeathTrack = nil
+local chooseDeathLoopTask = nil
+local customFlyLoopTask = nil
+
+-- Global state for interaction between Fly and Attack
+local atkHolding = false
+local attackIsMoving = false
+local attackStrikeInProgress = false
+local preAttackStage = 1
+local preAttackMultiplier = 1.0
+local preAttackFlyState = false
+
+-- Voicelines Arrays
+local voicelines = {
+	"You were given orders, you were given time.",
+	"I am Conquest, and I am your last chance to fulfill your duty.",
+	"Where is your Viltrumite heart?",
+	"Truth is? I want you to resist.",
+	"This planet isn't ready for the Viltrum Empire.",
+	"I am so lonely..",
+	"All the other Viltrumites are scared of me.."
+}
+
+local thraggVoicelines = {
+    "I am Thragg, bred to be the grant regent of the Viltrum Empire.",
+    "they will shatter before our strength, our devotion, our vengeance!",
+    "I was created to rule, i was given power to lead, to conquer, to KILL.",
+    "yes we are here, we will live among you.",
+    "my patience only goes so far..",
+    "Lord Argall, you are avenged!",
+    "I am not impressed.",
+    "All is ours!"
+}
+
+local thraggHistory = {}
+local lastLines = {}
+local canSayStandReady = true
+local lastUnequipTime = 0
+
+-- Forward declaration
+local updateFlyState
+
+-- Universal Chat Function (Fix for modern duplication)
+local function speak(message)
+    local sentModern = false
+	if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+		local channel = TextChatService:FindFirstChild("TextChannels") and TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+		if channel then
+			channel:SendAsync(message)
+            sentModern = true
+		end
+	end
+    if not sentModern then
+        local sayMsg = ReplicatedStorage:FindFirstChild("SayMessageRequest", true)
+        if sayMsg and sayMsg:IsA("RemoteEvent") then
+            sayMsg:FireServer(message, "All")
+        end
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
+            Chat:Chat(LocalPlayer.Character.Head, message, Enum.ChatColor.White)
+        end
+    end
+end
+
+-- Fling Logic
+local function startFlingLoop()
+	if flingConnection then flingConnection:Disconnect() end
+	flingConnection = RunService.Heartbeat:Connect(function()
+		if not (flingEnabled or isSlapping) then return end
+		local character = LocalPlayer.Character
+		local hrp = character and character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		task.spawn(function()
+			local oldVelo = hrp.AssemblyLinearVelocity
+			local oldRot = hrp.AssemblyAngularVelocity
+			
+			-- Applying extreme force
+			hrp.AssemblyLinearVelocity = Vector3.new(45000000, 450000000, 45000000)
+			hrp.AssemblyAngularVelocity = Vector3.new(99999, 99999, 99999)
+			
+			RunService.RenderStepped:Wait()
+			
+			-- Restoration
+			if hrp and hrp.Parent then
+				hrp.AssemblyLinearVelocity = oldVelo
+				hrp.AssemblyAngularVelocity = oldRot
+			end
+		end)
+	end)
+end
+
+local function stopFlingLoop()
+	if flingConnection then
+		flingConnection:Disconnect()
+		flingConnection = nil
+	end
+end
+
+-- God Mode Check and Loop Setup (Updated for Place 189707)
+task.spawn(function()
+    local pid = game.PlaceId
+    if pid ~= 189707 then
+        return
+    end
+    local rs = game:GetService("RunService")
+    local hb = rs.Heartbeat
+    local rsd = rs.RenderStepped
+    local lp = game.Players.LocalPlayer
+    local z = Vector3.zero
+    local function f(c)
+        local r = c:WaitForChild("HumanoidRootPart")
+        if r then
+            local con
+            con = hb:Connect(function()
+                if not r.Parent then
+                    con:Disconnect()
+                    return
+                end
+                local v = r.AssemblyLinearVelocity
+                r.AssemblyLinearVelocity = z
+                rsd:Wait()
+                if r.Parent then
+                    r.AssemblyLinearVelocity = v
+                end
+            end)
+        end
+    end
+    if lp.Character then
+        f(lp.Character)
+    end
+    lp.CharacterAdded:Connect(f)
+end)
+
+local function spawnEarthquake(pos, color, material, intensityMult)
+	task.spawn(function()
+		local actualIntensity = intensityMult
+		local baseCount = 15
+		local count = math.floor(baseCount * actualIntensity)
+		for i = 1, count do
+			local angle = (i / count) * math.pi * 2
+			local dist = math.random(4, 12) * actualIntensity
+			local offset = Vector3.new(math.cos(angle) * dist, 0, math.sin(angle) * dist)
+			local size = (math.random(100, 300) / 100) * actualIntensity
+			local part = Instance.new("Part")
+			part.Size = Vector3.new(size, size, size)
+			part.Position = pos + offset + Vector3.new(0, -1, 0)
+			part.Color = color
+			part.Material = material
+			part.CanCollide = false
+			part.Anchored = false
+			part.Parent = workspace
+			local jumpPower = 30 * actualIntensity
+			local velocity = (Vector3.new(0, jumpPower, 0) + (offset.Unit * (10 * actualIntensity)))
+			part.AssemblyLinearVelocity = velocity
+			part.AssemblyAngularVelocity = Vector3.new(math.random(-20, 20), math.random(-20, 20), math.random(-20, 20))
+			Debris:AddItem(part, 2.5)
+			task.spawn(function()
+				task.wait(1.5)
+				TweenService:Create(part, TweenInfo.new(1), {Transparency = 1}):Play()
+			end)
+		end
+	end)
+end
+
+local function applyShake(intensity, duration)
+	local camera = Workspace.CurrentCamera
+	local startTime = tick()
+	task.spawn(function()
+		while tick() - startTime < duration do
+			local shake = Vector3.new(
+				math.random(-100, 100)/1000 * intensity,
+				math.random(-100, 100)/1000 * intensity,
+				math.random(-100, 100)/1000 * intensity
+			)
+			camera.CFrame = camera.CFrame * CFrame.new(shake)
+			RunService.RenderStepped:Wait()
+		end
+	end)
+end
+
+-- --- UPDATED STAGE 3 SMOOTH SHAKE ENGINE ---
+local function applyStage3Shake()
+	local camera = Workspace.CurrentCamera
+	task.spawn(function()
+		task.wait(0.5)
+		while mobileFlyOn and currentStage == 3 and not isLanding and not atkHolding and not isSlapping do
+			local baseIntensity = 0.5
+			local extraIntensity = (currentFlyMultiplier / 10) * 0.7
+			targetStage3ShakeIntensity = baseIntensity + extraIntensity
+			currentStage3ShakeIntensity = currentStage3ShakeIntensity + (targetStage3ShakeIntensity - currentStage3ShakeIntensity) * 0.25
+			if currentStage3ShakeIntensity > 0.01 then
+				local shake = Vector3.new(
+					math.random(-100, 100)/1000 * currentStage3ShakeIntensity,
+					math.random(-100, 100)/1000 * currentStage3ShakeIntensity,
+					math.random(-100, 100)/1000 * currentStage3ShakeIntensity
+				)
+				camera.CFrame = camera.CFrame * CFrame.new(shake)
+			end
+			RunService.RenderStepped:Wait()
+		end
+	end)
+end
+
+local function applyAttackShake()
+	local camera = Workspace.CurrentCamera
+	task.spawn(function()
+		local currentIntensity = 0
+		local maxStage3Intensity = 0.5 + (10.0 / 10) * 0.7
+		local targetMaxIntensity = (maxStage3Intensity * 2.0) / 1.5
+		while atkHolding do
+			local dt = RunService.RenderStepped:Wait()
+			if attackIsMoving then
+				currentIntensity = math.min(currentIntensity + (dt * 2), targetMaxIntensity)
+			else
+				currentIntensity = math.max(currentIntensity - (dt * 1.6), 0)
+			end
+			if currentIntensity > 0.01 then
+				local shake = Vector3.new(
+					math.random(-100, 100)/1000 * currentIntensity,
+					math.random(-100, 100)/1000 * currentIntensity,
+					math.random(-100, 100)/1000 * currentIntensity
+				)
+				camera.CFrame = camera.CFrame * CFrame.new(shake)
+			end
+		end
+	end)
+end
+
+local function clearFlyTracks(fadeOverride)
+	local useFade = fadeOverride or FADE_TIME
+	for _, track in pairs(flyTracks) do track:Stop(useFade) end
+	if flyAnimTask then local status = coroutine.status(flyAnimTask) if status ~= "dead" then task.cancel(flyAnimTask) end flyAnimTask = nil end
+	if customFlyLoopTask then local status = coroutine.status(customFlyLoopTask) if status ~= "dead" then task.cancel(customFlyLoopTask) end customFlyLoopTask = nil end
+	flyTracks = {}
+end
+
+local function playFlyAnim(id, looped, fadeOverride)
+	-- GUARD: never play fly animations when fly is off
+	if not mobileFlyOn then return nil end
+	local character = LocalPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+	local useFade = fadeOverride or FADE_TIME
+	local anim = Instance.new("Animation")
+	anim.AnimationId = id
+	local track = humanoid:LoadAnimation(anim)
+	track.Looped = looped
+	track:Play(useFade)
+	table.insert(flyTracks, track)
+	return track
+end
+
+-- Custom Ping-Pong Loop for Fly Animation V1, V2 & V3 Modifications
+local function runCustomFlyLoop(track)
+    if customFlyLoopTask then pcall(function() task.cancel(customFlyLoopTask) end) end
+    customFlyLoopTask = task.spawn(function()
+        if flyAnimVersion == 2 then
+            track:Play()
+            track:AdjustSpeed(0.5)
+            while mobileFlyOn do
+                RunService.RenderStepped:Wait()
+            end
+        elseif flyAnimVersion == 3 then
+            track:Play()
+            track:AdjustSpeed(1.0)
+            while mobileFlyOn do
+                RunService.RenderStepped:Wait()
+            end
+        else
+            local START_TIME = 2.5
+            local END_TIME = 2.7
+            local PLAYBACK_SPEED = 0.2
+            track:Play()
+            while mobileFlyOn do
+                track:AdjustSpeed(PLAYBACK_SPEED)
+                track.TimePosition = START_TIME
+                while track.TimePosition < END_TIME and mobileFlyOn do
+                    RunService.RenderStepped:Wait()
+                end
+                if not mobileFlyOn then break end
+                track:AdjustSpeed(-PLAYBACK_SPEED)
+                track.TimePosition = END_TIME
+                while track.TimePosition > START_TIME and mobileFlyOn do
+                    RunService.RenderStepped:Wait()
+                end
+                if not mobileFlyOn then break end
+            end
+        end
+        if not mobileFlyOn then
+            pcall(function() track:Stop(0) end)
+        end
+    end)
+end
+
+-- Thraxsans Unique Loop Task Creator Function
+local function launchThraxsansLoop()
+    local character = LocalPlayer.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    if thraxsaTrack then thraxsaTrack:Stop(0) thraxsaTrack = nil end
+    local a = Instance.new("Animation"); a.AnimationId = THRAXSANS_ANIM_ID
+    thraxsaTrack = humanoid:LoadAnimation(a)
+    thraxsaTrack.Priority = Enum.AnimationPriority.Action3
+    if customFlyLoopTask then pcall(function() task.cancel(customFlyLoopTask) end) end
+    customFlyLoopTask = task.spawn(function()
+        local START_TIME = 3.3
+        local END_TIME = 3.9
+        local PLAYBACK_SPEED = 0.2
+        thraxsaTrack:Play(0.5)
+        while thraxsaToggled and mobileFlyOn and not isLanding do
+            thraxsaTrack:AdjustSpeed(PLAYBACK_SPEED)
+            thraxsaTrack.TimePosition = START_TIME
+            while thraxsaTrack.TimePosition < END_TIME and thraxsaToggled and mobileFlyOn and not isLanding do RunService.RenderStepped:Wait() end
+            if not thraxsaToggled or isLanding or not mobileFlyOn then break end
+            thraxsaTrack:AdjustSpeed(-PLAYBACK_SPEED)
+            thraxsaTrack.TimePosition = END_TIME
+            while thraxsaTrack.TimePosition > START_TIME and thraxsaToggled and mobileFlyOn and not isLanding do RunService.RenderStepped:Wait() end
+        end
+        if not mobileFlyOn then
+            pcall(function() if thraxsaTrack then thraxsaTrack:Stop(0) end end)
+        end
+    end)
+end
+
+-- Choose Death Loop Task Creator Function
+local function launchChooseDeathLoop()
+    local character = LocalPlayer.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    if chooseDeathTrack then pcall(function() chooseDeathTrack:Stop(0) end) chooseDeathTrack = nil end
+    if chooseDeathLoopTask then pcall(function() task.cancel(chooseDeathLoopTask) end) chooseDeathLoopTask = nil end
+
+    chooseDeathLoopTask = task.spawn(function()
+        while chooseDeathToggled and mobileFlyOn do
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local anim2 = hum and hum:FindFirstChildOfClass("Animator")
+            if not hum or not anim2 then task.wait(0.1) continue end
+
+            local animObj = Instance.new("Animation")
+            animObj.AnimationId = "rbxassetid://120259901254705"
+            chooseDeathTrack = hum:LoadAnimation(animObj)
+            chooseDeathTrack.Priority = Enum.AnimationPriority.Action3
+            chooseDeathTrack.Looped = false
+            chooseDeathTrack:Play(0.3)
+
+            if voicelinesEnabled then speak("NOOOOOOO!!!") end
+
+            chooseDeathTrack:AdjustSpeed(0.15)
+            local phase1Start = tick()
+            while chooseDeathToggled and mobileFlyOn and (tick() - phase1Start < 6.0) do
+                task.wait()
+            end
+            if not chooseDeathToggled or not mobileFlyOn then
+                if chooseDeathTrack then pcall(function() chooseDeathTrack:Stop(0.3) end) chooseDeathTrack = nil end
+                break
+            end
+            if voicelinesEnabled then speak("I CHOOSE DEATH!") end
+            while chooseDeathToggled and mobileFlyOn and (tick() - phase1Start < 7.5) do
+                task.wait()
+            end
+            if not chooseDeathToggled or not mobileFlyOn then
+                if chooseDeathTrack then pcall(function() chooseDeathTrack:Stop(0.3) end) chooseDeathTrack = nil end
+                break
+            end
+
+            if chooseDeathTrack then chooseDeathTrack:AdjustSpeed(1.5) end
+            local phase2Start = tick()
+            while chooseDeathToggled and mobileFlyOn and (tick() - phase2Start < 0.4) do
+                task.wait()
+            end
+            if not chooseDeathToggled or not mobileFlyOn then
+                if chooseDeathTrack then pcall(function() chooseDeathTrack:Stop(0.3) end) chooseDeathTrack = nil end
+                break
+            end
+
+            if chooseDeathTrack then chooseDeathTrack:AdjustSpeed(0.15) end
+            while chooseDeathToggled and mobileFlyOn and chooseDeathTrack and chooseDeathTrack.IsPlaying do
+                task.wait()
+            end
+            if chooseDeathTrack then pcall(function() chooseDeathTrack:Stop(0.1) end) chooseDeathTrack = nil end
+
+            if not chooseDeathToggled or not mobileFlyOn then break end
+            task.wait(0.05)
+        end
+        chooseDeathLoopTask = nil
+    end)
+end
+
+-- buttonContainer and topButtonContainer already declared above before hideBtn
+
+-- Function to create buttons (Fantasy Font)
+local function createSmallButton(name, pos, imageId, text, parentOverride, removeLabelText)
+    local btn = Instance.new("ImageButton")
+    btn.Name = name
+    btn.Size = UDim2.new(0, 45, 0, 45)
+    btn.Position = pos
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.BorderSizePixel = 0
+    btn.Active = true
+    btn.AutoButtonColor = true
+    btn.Parent = parentOverride or buttonContainer
+    table.insert(smallButtonsList, btn)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0.3, 0)
+    corner.Parent = btn
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 2
+    stroke.Color = Color3.fromRGB(60, 60, 60)
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = btn
+    if imageId then
+        btn.Image = "rbxthumb://type=Asset&id="..imageId.."&w=150&h=150"
+    end
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.Font = Enum.Font.Fantasy
+    label.TextSize = 8
+    label.TextWrapped = true
+    label.Text = removeLabelText and "" or (text or "")
+    label.Parent = btn
+    return btn, stroke
+end
+
+-- Attack Logic Variables
+local atkTrack1, atkTrack2, atkTrack3, atkTrack3Dup, atkTrackSpecA, atkTrackSpecB, atkTrackSpecC, atkStrikeTrack
+local atkHoverAnimsActive = false
+local atkAnimsLoaded = false
+
+local function destroyAttackAnims()
+    local function safe(t) if t then pcall(function() t:Stop(0) end) end end
+    safe(atkTrack1); safe(atkTrack2); safe(atkTrack3); safe(atkTrack3Dup)
+    safe(atkTrackSpecA); safe(atkTrackSpecB); safe(atkTrackSpecC); safe(atkStrikeTrack)
+    atkTrack1=nil; atkTrack2=nil; atkTrack3=nil; atkTrack3Dup=nil
+    atkTrackSpecA=nil; atkTrackSpecB=nil; atkTrackSpecC=nil; atkStrikeTrack=nil
+    atkAnimsLoaded = false; atkHoverAnimsActive = false
+end
+
+local function playAttackStrike()
+    if attackStrikeInProgress or isLanding then return end
+    attackStrikeInProgress = true
+    local character = LocalPlayer.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+    if not animator then attackStrikeInProgress = false return end
+    if atkTrack1 then atkTrack1:Stop(0.3) end
+    if atkTrack2 then atkTrack2:Stop(0.3) end
+    if atkTrack3 then atkTrack3:Stop(0.3) end
+    if atkTrack3Dup then atkTrack3Dup:Stop(0.3) end
+    if atkTrackSpecA then atkTrackSpecA:Stop(0.3) end
+    if atkTrackSpecB then atkTrackSpecB:Stop(0.3) end
+    if atkTrackSpecC then atkTrackSpecC:Stop(0.3) end
+    local s = Instance.new("Animation"); s.AnimationId = ATTACK_STRIKE_ID
+    atkStrikeTrack = animator:LoadAnimation(s)
+    atkStrikeTrack.Priority = Enum.AnimationPriority.Action4
+    atkStrikeTrack.Looped = false
+    atkStrikeTrack:Play(0.3)
+    atkStrikeTrack.TimePosition = ATTACK_STRIKE_START_TIME
+    atkStrikeTrack:AdjustSpeed(ATTACK_STRIKE_SPEED)
+    local waitDur = math.max(0, (atkStrikeTrack.Length - ATTACK_STRIKE_START_TIME) / ATTACK_STRIKE_SPEED)
+    task.wait(waitDur)
+    if atkHolding and not isLanding then atkHoverAnimsActive = false end
+    attackStrikeInProgress = false
+end
+
+-- BUTTON CREATION
+-- [Ground Land]
+local landBtn = createSmallButton("LandBtn", UDim2.new(0, 75, 0, 18), nil, "Ground Land: ON")
+
+-- [Fling]
+local flingBtn = createSmallButton("FlingBtn", UDim2.new(0, 15, 0, -12), nil, "Fling: OFF")
+
+-- [Sneak Attack / Slap]
+local slapBtn, slapStroke = createSmallButton("SlapBtn", UDim2.new(0, 15, 0, -67), "135549970366018", "Slap", nil, true)
+
+-- [Attack]
+local attackBtn, attackStroke = createSmallButton("AttackBtn", UDim2.new(0, 75, 0, -37), "91126809970273", "Attack", nil, true)
+
+-- [Act Fool]
+local foolBtn, foolStroke = createSmallButton("FoolBtn", UDim2.new(0, 75, 0, -92), "73364184163277", "Act Fool", nil, true)
+
+-- [Release The Thraxsans]
+local thraxsaBtn, thraxsaStroke = createSmallButton("ThraxsaBtn", UDim2.new(0, 135, 0, -37), "82869264109750", "Thraxsans", nil, true)
+
+-- [Random Voicelines Button]
+local voicelineBtn, voicelineStroke = createSmallButton("VoicelineBtn", UDim2.new(0, 135, 0, -92), "106240217983633", "Random voicelines", nil, false)
+
+-- [Bow to King]
+local kingBtn, kingStroke = createSmallButton("KingBtn", UDim2.new(0, 190, 0, -37), "129975099352567", "Bow King", nil, true)
+
+-- [Choose Death] - placed to the right of the Random Voicelines button
+local chooseDeathBtn, chooseDeathStroke = createSmallButton("ChooseDeathBtn", UDim2.new(0, 190, 0, -92), "132524758102177", "Choose Death", nil, true)
+
+
+-- Action Bindings & Drag Configuration Execution Loops
+makeSmartDraggable(attackBtn, function()
+    atkHolding = not atkHolding
+    attackStroke.Color = atkHolding and Color3.fromRGB(0, 80, 0) or Color3.fromRGB(60, 60, 60)
+    if atkHolding then
+        preAttackStage = currentStage
+        preAttackMultiplier = currentFlyMultiplier
+        preAttackFlyState = (flyCurrentState == true)
+        applyAttackShake()
+        local character = LocalPlayer.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+        destroyAttackAnims()
+        if animator then
+            local function make(id) local a = Instance.new("Animation"); a.AnimationId = id; return animator:LoadAnimation(a) end
+            atkTrack1 = make(ATTACK_ANIM_1_ID); atkTrack2 = make(ATTACK_ANIM_2_ID); atkTrack3 = make(ATTACK_ANIM_3_ID); atkTrack3Dup = make(ATTACK_ANIM_3_ID); atkTrackSpecA = make(ATTACK_SPECIAL_ID); atkTrackSpecB = make(ATTACK_SPECIAL_ID); atkTrackSpecC = make(ATTACK_SPECIAL_ID)
+            local pri = Enum.AnimationPriority.Action4
+            atkTrack1.Priority = pri; atkTrack2.Priority = pri; atkTrack3.Priority = pri; atkTrack3Dup.Priority = pri; atkTrackSpecA.Priority = pri; atkTrackSpecB.Priority = pri; atkTrackSpecC.Priority = pri
+            atkTrack1.Looped = true; atkTrack2.Looped = true; atkTrack3.Looped = true; atkTrack3Dup.Looped = true; atkTrackSpecA.Looped = true; atkTrackSpecB.Looped = true; atkTrackSpecC.Looped = true
+            atkAnimsLoaded = true
+        end
+    else
+        attackIsMoving = false
+        attackStrikeInProgress = false
+        destroyAttackAnims()
+        currentStage = preAttackStage
+        currentFlyMultiplier = preAttackMultiplier
+        flyCurrentState = nil
+        if updateFlyState then updateFlyState(false) end
+    end
+end, true)
+
+makeSmartDraggable(slapBtn, function()
+    oliverSlapToggled = not oliverSlapToggled
+    slapStroke.Color = oliverSlapToggled and Color3.fromRGB(0, 80, 0) or Color3.fromRGB(60, 60, 60)
+    if not oliverSlapToggled then
+        if oliverHighlight then oliverHighlight:Destroy() oliverHighlight = nil end
+        oliverTarget = nil
+    end
+end, true)
+
+makeSmartDraggable(landBtn, function()
+    groundLandingEnabled = not groundLandingEnabled
+    landBtn.TextLabel.Text = "Ground Land: " .. (groundLandingEnabled and "ON" or "OFF")
+end, true)
+
+makeSmartDraggable(flingBtn, function()
+    flingEnabled = not flingEnabled
+    flingBtn.TextLabel.Text = "Fling: " .. (flingEnabled and "ON" or "OFF")
+    if flingEnabled then startFlingLoop() else stopFlingLoop() end
+end, true)
+
+makeSmartDraggable(foolBtn, function()
+    foolToggled = not foolToggled
+    foolStroke.Color = foolToggled and Color3.fromRGB(0, 80, 0) or Color3.fromRGB(60, 60, 60)
+    local character = LocalPlayer.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    if foolToggled then
+        thraxsaToggled = false; kingToggled = false
+        if thraxsaTrack then thraxsaTrack:Stop(0.5) end
+        if kingTrack then kingTrack:Stop(0.5) end
+        clearFlyTracks(0.5)
+        if humanoid then
+            local a = Instance.new("Animation"); a.AnimationId = FOOL_ANIM_ID
+            foolTrack = humanoid:LoadAnimation(a)
+            foolTrack.Priority = Enum.AnimationPriority.Action3
+            foolTrack.Looped = true
+            foolTrack:Play(0.5)
+        end
+    else
+        if foolTrack then foolTrack:Stop(0.5) foolTrack = nil end
+        if mobileFlyOn then flyCurrentState = nil; updateFlyState(getFlyMovementDirection().Magnitude > 0) end
+    end
+end, true)
+
+makeSmartDraggable(thraxsaBtn, function()
+    thraxsaToggled = not thraxsaToggled
+    thraxsaStroke.Color = thraxsaToggled and Color3.fromRGB(0, 80, 0) or Color3.fromRGB(60, 60, 60)
+    if thraxsaToggled then
+        foolToggled = false; kingToggled = false
+        if foolTrack then foolTrack:Stop(0.5) end
+        if kingTrack then kingTrack:Stop(0.5) end
+        clearFlyTracks(0.5)
+        launchThraxsansLoop()
+        if voicelinesEnabled then speak("BRING ME THE SKULLS OF THESE TRAITORS") end
+    else
+        thraxsaToggled = false
+        if thraxsaTrack then thraxsaTrack:Stop(0.5) thraxsaTrack = nil end
+        if customFlyLoopTask then pcall(function() task.cancel(customFlyLoopTask) end) end
+        if mobileFlyOn then flyCurrentState = nil; updateFlyState(getFlyMovementDirection().Magnitude > 0) end
+    end
+end, true)
+
+makeSmartDraggable(voicelineBtn, function()
+    local chosenIndex = nil
+    local availableIndices = {}
+    for i = 1, #thraggVoicelines do
+        local isBanned = false
+        for _, historyIndex in ipairs(thraggHistory) do
+            if historyIndex == i then isBanned = true break end
+        end
+        if not isBanned then table.insert(availableIndices, i) end
+    end
+    if #availableIndices > 0 then
+        chosenIndex = availableIndices[math.random(1, #availableIndices)]
+    else
+        chosenIndex = math.random(1, #thraggVoicelines)
+    end
+    table.insert(thraggHistory, chosenIndex)
+    if #thraggHistory > 2 then table.remove(thraggHistory, 1) end
+    speak(thraggVoicelines[chosenIndex])
+end, true)
+
+makeSmartDraggable(kingBtn, function()
+    kingToggled = not kingToggled
+    kingStroke.Color = kingToggled and Color3.fromRGB(0, 80, 0) or Color3.fromRGB(60, 60, 60)
+    local character = LocalPlayer.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    if kingToggled then
+        foolToggled = false; thraxsaToggled = false
+        if foolTrack then foolTrack:Stop(0.5) end
+        if thraxsaTrack then thraxsaTrack:Stop(0.5) end
+        clearFlyTracks(0.5)
+        if humanoid then
+            local a = Instance.new("Animation"); a.AnimationId = KING_ANIM_ID
+            kingTrack = humanoid:LoadAnimation(a)
+            kingTrack.Priority = Enum.AnimationPriority.Action3
+            if customFlyLoopTask then pcall(function() task.cancel(customFlyLoopTask) end) end
+            customFlyLoopTask = task.spawn(function()
+                local START_TIME = 5.2
+                local END_TIME = 5.8
+                local PLAYBACK_SPEED = 0.3
+                kingTrack:Play()
+                while kingToggled and mobileFlyOn and not isLanding do
+                    kingTrack:AdjustSpeed(PLAYBACK_SPEED)
+                    kingTrack.TimePosition = START_TIME
+                    while kingTrack.TimePosition < END_TIME and kingToggled and mobileFlyOn and not isLanding do RunService.RenderStepped:Wait() end
+                    if not kingToggled or isLanding or not mobileFlyOn then break end
+                    kingTrack:AdjustSpeed(-PLAYBACK_SPEED)
+                    kingTrack.TimePosition = END_TIME
+                    while kingTrack.TimePosition > START_TIME and kingToggled and mobileFlyOn and not isLanding do RunService.RenderStepped:Wait() end
+                end
+                if not mobileFlyOn then
+                    pcall(function() if kingTrack then kingTrack:Stop(0) end end)
+                end
+            end)
+        end
+    else
+        kingToggled = false
+        if kingTrack then kingTrack:Stop(0.5) kingTrack = nil end
+        if customFlyLoopTask then pcall(function() task.cancel(customFlyLoopTask) end) end
+        if mobileFlyOn then flyCurrentState = nil; updateFlyState(getFlyMovementDirection().Magnitude > 0) end
+    end
+end, true)
+
+makeSmartDraggable(chooseDeathBtn, function()
+    chooseDeathToggled = not chooseDeathToggled
+    chooseDeathStroke.Color = chooseDeathToggled and Color3.fromRGB(0, 80, 0) or Color3.fromRGB(60, 60, 60)
+    if chooseDeathToggled then
+        launchChooseDeathLoop()
+    else
+        chooseDeathToggled = false
+        if chooseDeathLoopTask then pcall(function() task.cancel(chooseDeathLoopTask) end) chooseDeathLoopTask = nil end
+        if chooseDeathTrack then pcall(function() chooseDeathTrack:Stop(0.3) end) chooseDeathTrack = nil end
+    end
+end, true)
+
+-- Utility/Top Row Control Configurations
+local speedBtn = createSmallButton("SpeedBtn", UDim2.new(0, 40, 0, -12), "129624286483532", "Normal", topButtonContainer)
+local speedStrokeText = Instance.new("UIStroke")
+speedStrokeText.Thickness = 1.5
+speedStrokeText.Color = Color3.fromRGB(0, 0, 0)
+speedStrokeText.Parent = speedBtn.TextLabel
+makeSmartDraggable(speedBtn, function()
+    flySpeedMode = (flySpeedMode + 1) % 3
+    speedBtn.TextLabel.Text = FLY_SPEED_MODIFIERS[flySpeedMode] == 1.0 and "Normal" or (FLY_SPEED_MODIFIERS[flySpeedMode] == 0.5 and "Slow" or "Fast")
+end, true)
+
+local animBtn = createSmallButton("AnimBtn", UDim2.new(0, 95, 0, -12), nil, "fly animation V1", topButtonContainer)
+makeSmartDraggable(animBtn, function()
+    if flyAnimVersion == 1 then
+        flyAnimVersion = 2
+        animBtn.TextLabel.Text = "fly animation V2"
+    elseif flyAnimVersion == 2 then
+        flyAnimVersion = 3
+        animBtn.TextLabel.Text = "fly animation V3"
+    else
+        flyAnimVersion = 1
+        animBtn.TextLabel.Text = "fly animation V1"
+    end
+    if mobileFlyOn and currentStage == 3 and flyCurrentState == true and not isLanding and not atkHolding and not foolToggled and not thraxsaToggled and not kingToggled then
+        clearFlyTracks(0.5)
+        local activeTrackId = (flyAnimVersion == 3) and WALK_3_V3_ID or ((flyAnimVersion == 2) and WALK_3_V2_ID or WALK_3_ID)
+        local track = playFlyAnim(activeTrackId, (flyAnimVersion ~= 1), 0.5)
+        if track then
+            track.Priority = Enum.AnimationPriority.Action
+            runCustomFlyLoop(track)
+        end
+        applyStage3Shake()
+    end
+end, true)
+
+local idleAnimBtn = createSmallButton("IdleAnimBtn", UDim2.new(0, 150, 0, -12), nil, "fly idle animation V1", topButtonContainer)
+makeSmartDraggable(idleAnimBtn, function()
+    flyIdleVersion = (flyIdleVersion % 6) + 1
+    idleAnimBtn.TextLabel.Text = "fly idle animation V" .. flyIdleVersion
+    if mobileFlyOn and flyCurrentState == false and not isLanding and not atkHolding and not foolToggled and not thraxsaToggled and not kingToggled then
+        clearFlyTracks(0.45)
+        playFlyAnim(FLY_IDLE_OPTIONS[flyIdleVersion], true, 0.45)
+    end
+end, true)
+
+
+-- Background Attack Animation Loop
+task.spawn(function()
+    while true do
+        if isLanding then
+            if atkHoverAnimsActive then
+                atkHoverAnimsActive = false
+                if atkTrack1 then atkTrack1:Stop(0.3) end
+                if atkTrack2 then atkTrack2:Stop(0.3) end
+                if atkTrack3 then atkTrack3:Stop(0.3) end
+                if atkTrack3Dup then atkTrack3Dup:Stop(0.3) end
+                if atkTrackSpecA then atkTrackSpecA:Stop(0.3) end
+                if atkTrackSpecB then atkTrackSpecB:Stop(0.3) end
+                if atkTrackSpecC then atkTrackSpecC:Stop(0.3) end
+            end
+            task.wait()
+            continue
+        end
+        if atkHolding and atkAnimsLoaded and not isLanding then
+            if attackIsMoving and not attackStrikeInProgress then
+                if not atkHoverAnimsActive then
+                    atkHoverAnimsActive = true
+                    if atkTrack1 then atkTrack1:Play(0.3) end
+                    if atkTrack2 then atkTrack2:Play(0.3) end
+                    if atkTrack3 then atkTrack3:Play(0.3) end
+                    if atkTrack3Dup then atkTrack3Dup:Play(0.3) end
+                    local specials = {atkTrackSpecA, atkTrackSpecB, atkTrackSpecC}
+                    for _, tr in ipairs(specials) do if tr then tr:Play(0.3); tr.TimePosition = SPECIAL_START_TIME; tr:AdjustSpeed(SPECIAL_SPEED) end end
+                end
+            elseif not attackIsMoving or attackStrikeInProgress then
+                if atkHoverAnimsActive then
+                    atkHoverAnimsActive = false
+                    if atkTrack1 then atkTrack1:Stop(0.3) end
+                    if atkTrack2 then atkTrack2:Stop(0.3) end
+                    if atkTrack3 then atkTrack3:Stop(0.3) end
+                    if atkTrack3Dup then atkTrack3Dup:Stop(0.3) end
+                    if atkTrackSpecA then atkTrackSpecA:Stop(0.3) end
+                    if atkTrackSpecB then atkTrackSpecB:Stop(0.3) end
+                    if atkTrackSpecC then atkTrackSpecC:Stop(0.3) end
+                end
+            end
+        end
+        task.wait()
+    end
+end)
+
+-- Universal Tap-to-Strike Listener
+local touchStartTime = 0
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe or isLanding or isSlapping then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        touchStartTime = tick()
+    end
+end)
+
+-- Dynamic Response for Mobile Tap / Click Interactions
+UserInputService.InputEnded:Connect(function(input, gpe)
+    if gpe or isLanding or isSlapping then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        local duration = tick() - touchStartTime
+        if duration <= 0.2 then
+            if atkHolding then
+                playAttackStrike()
+                return
+            end
+            if oliverSlapToggled then
+                local mouse = LocalPlayer:GetMouse()
+                local target = mouse.Target
+                if not target then return end
+                local character = target:FindFirstAncestorOfClass("Model")
+                local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+                local hrp = character and character:FindFirstChild("HumanoidRootPart")
+                if humanoid and hrp and humanoid.Health > 0 and character ~= LocalPlayer.Character then
+                    if oliverTarget == character then
+                        isSlapping = true
+                        if oliverHighlight then oliverHighlight:Destroy() oliverHighlight = nil end
+                        oliverTarget = nil
+                        task.spawn(function()
+                            local myChar = LocalPlayer.Character
+                            local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
+                            local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                            if not myHum or not myHrp then isSlapping = false return end
+                            local startPos = myHrp.CFrame
+                            clearFlyTracks(0.5)
+                            if customFlyLoopTask then pcall(function() task.cancel(customFlyLoopTask) end) end
+                            local sneakAnim = Instance.new("Animation"); sneakAnim.AnimationId = SNEAK_ATTACK_ANIM_ID
+                            local strikeAnim = Instance.new("Animation"); strikeAnim.AnimationId = ATTACK_STRIKE_ID
+                            local flyIdleAnim = Instance.new("Animation"); flyIdleAnim.AnimationId = FLY_IDLE_OPTIONS[flyIdleVersion]
+                            local track1 = myHum:LoadAnimation(sneakAnim)
+                            local track2 = myHum:LoadAnimation(strikeAnim)
+                            local trackFlyIdle = myHum:LoadAnimation(flyIdleAnim)
+                            track1.Priority = Enum.AnimationPriority.Action4
+                            track2.Priority = Enum.AnimationPriority.Action4
+                            trackFlyIdle.Priority = Enum.AnimationPriority.Idle
+                            track1:Play(0.5)
+                            local slap1Start = tick()
+                            local loop1
+                            loop1 = RunService.Heartbeat:Connect(function()
+                                if tick() - slap1Start > 1.5 or not character.Parent or humanoid.Health <= 0 then
+                                    loop1:Disconnect()
+                                    return
+                                end
+                                for _, t in pairs(myHum:GetPlayingAnimationTracks()) do if t ~= track1 then t:Stop(0.5) end end
+                                local targetLook = hrp.CFrame.LookVector
+                                local flatLook = Vector3.new(targetLook.X, 0, targetLook.Z).Unit
+                                myHrp.CFrame = CFrame.lookAt(hrp.Position - (flatLook * 2.5), hrp.Position)
+                            end)
+                            task.wait(1.5)
+                            if loop1.Connected then loop1:Disconnect() end
+                            track1:Stop(0.5)
+                            if character.Parent and hrp then
+                                local targetLook = hrp.CFrame.LookVector
+                                local flatLook = Vector3.new(targetLook.X, 0, targetLook.Z).Unit
+                                myHrp.CFrame = CFrame.lookAt(hrp.Position - (flatLook * 1.5), hrp.Position)
+                            end
+                            trackFlyIdle:Play(0.45)
+                            track2:Play(0.3)
+                            track2.TimePosition = ATTACK_STRIKE_START_TIME
+                            track2:AdjustSpeed(ATTACK_STRIKE_SPEED)
+                            startFlingLoop()
+                            local slap2Start = tick()
+                            local loop2
+                            loop2 = RunService.Heartbeat:Connect(function()
+                                if tick() - slap2Start > 0.7 or not character.Parent or humanoid.Health <= 0 then
+                                    loop2:Disconnect()
+                                    return
+                                end
+                                local targetLook = hrp.CFrame.LookVector
+                                local flatLook = Vector3.new(targetLook.X, 0, targetLook.Z).Unit
+                                local jitter = Vector3.new(math.random(-200, 200)/100, math.random(-50, 50)/100, math.random(-200, 200)/100)
+                                local isJumping = math.abs(hrp.Velocity.Y) > 5
+                                if isJumping then
+                                    local predictionOffset = hrp.Velocity / 6.0
+                                    myHrp.CFrame = CFrame.new(hrp.Position + predictionOffset + jitter) * CFrame.new(0, 1.5, 0)
+                                else
+                                    myHrp.CFrame = CFrame.new(hrp.Position + jitter) * (CFrame.new(0, 1.5, 0) + humanoid.MoveDirection * hrp.Velocity.Magnitude / 1.8)
+                                end
+                                myHrp.CFrame = CFrame.lookAt(myHrp.Position, myHrp.Position + flatLook)
+                                myHrp.Velocity = Vector3.new(450000000, 4500000000, 450000000)
+                            end)
+                            task.wait(0.7)
+                            if loop2.Connected then loop2:Disconnect() end
+                            track2:Stop(0.3)
+                            trackFlyIdle:Stop(0.45)
+                            stopFlingLoop()
+                            myHrp.Velocity = Vector3.zero
+                            myHrp.CFrame = startPos
+                            isSlapping = false
+                            if mobileFlyOn then
+                                flyCurrentState = nil
+                                if foolToggled and myHum then
+                                    local a = Instance.new("Animation"); a.AnimationId = FOOL_ANIM_ID
+                                    foolTrack = myHum:LoadAnimation(a)
+                                    foolTrack.Priority = Enum.AnimationPriority.Action3
+                                    foolTrack.Looped = true
+                                    foolTrack:Play(0.5)
+                                elseif thraxsaToggled then
+                                    launchThraxsansLoop()
+                                elseif kingToggled and myHum then
+                                    local a = Instance.new("Animation"); a.AnimationId = KING_ANIM_ID
+                                    kingTrack = myHum:LoadAnimation(a)
+                                    kingTrack.Priority = Enum.AnimationPriority.Action3
+                                    customFlyLoopTask = task.spawn(function()
+                                        local START_TIME = 5.2
+                                        local END_TIME = 5.8
+                                        local PLAYBACK_SPEED = 0.3
+                                        kingTrack:Play()
+                                        while kingToggled and mobileFlyOn and not isLanding do
+                                            kingTrack:AdjustSpeed(PLAYBACK_SPEED)
+                                            kingTrack.TimePosition = START_TIME
+                                            while kingTrack.TimePosition < END_TIME and kingToggled and mobileFlyOn and not isLanding do RunService.RenderStepped:Wait() end
+                                            if not kingToggled or isLanding or not mobileFlyOn then break end
+                                            kingTrack:AdjustSpeed(-PLAYBACK_SPEED)
+                                            kingTrack.TimePosition = END_TIME
+                                            while kingTrack.TimePosition > START_TIME and kingToggled and mobileFlyOn and not isLanding do RunService.RenderStepped:Wait() end
+                                        end
+                                        if not mobileFlyOn then
+                                            pcall(function() if kingTrack then kingTrack:Stop(0) end end)
+                                        end
+                                    end)
+                                else
+                                    updateFlyState(getFlyMovementDirection().Magnitude > 0)
+                                end
+                            end
+                        end)
+                    else
+                        if oliverHighlight then oliverHighlight:Destroy() end
+                        oliverTarget = character
+                        oliverHighlight = Instance.new("Highlight")
+                        oliverHighlight.FillColor = Color3.fromRGB(255, 0, 0)
+                        oliverHighlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        oliverHighlight.FillTransparency = 0.5
+                        oliverHighlight.Parent = character
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Noclip Logic
+local noclipParts = {}
+local function rebuildNoclipCache()
+	noclipParts = {}
+	if LocalPlayer.Character then
+		for _, p in ipairs(LocalPlayer.Character:GetDescendants()) do if p:IsA("BasePart") then table.insert(noclipParts, p) end end
+	end
+end
+
+local function setNoclip(enabled)
+	noclipOn = enabled
+	if noclipLoopConnection then noclipLoopConnection:Disconnect(); noclipLoopConnection = nil end
+	if enabled then
+		rebuildNoclipCache()
+		noclipLoopConnection = RunService.RenderStepped:Connect(function() for _, part in ipairs(noclipParts) do part.CanCollide = false end end)
+	else
+		if LocalPlayer.Character then local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart") if hrp then pcall(function() hrp.CanCollide = true end) end end
+	end
+end
+
+-- Fly Core
+updateFlyState = function(isMoving)
+	-- GUARD: never run fly state logic when fly is off
+	if not mobileFlyOn then return end
+	if isLanding or isSlapping then return end
+	attackIsMoving = isMoving
+	if flyCurrentState == isMoving and not (foolToggled or thraxsaToggled or kingToggled) then return end
+    if flyCurrentState ~= isMoving then
+        flyCurrentState = isMoving
+        if not isMoving then
+            if not (foolToggled or thraxsaToggled or kingToggled) then
+                clearFlyTracks(0.45)
+                playFlyAnim(FLY_IDLE_OPTIONS[flyIdleVersion], true, 0.45)
+            end
+            currentFlyMultiplier = 1.0
+            currentStage = 1
+            stage3TimeElapsed = 0
+        else
+            if foolToggled or thraxsaToggled or kingToggled then
+                if flyAnimTask then pcall(function() task.cancel(flyAnimTask) end) end
+                flyAnimTask = task.spawn(function()
+                    currentStage = 1
+                    stage3TimeElapsed = 0
+                    local startTime = tick()
+                    while tick() - startTime < 0.173 and flyCurrentState == true and mobileFlyOn do
+                        local alpha = (tick() - startTime) / 0.173
+                        currentFlyMultiplier = 1.0 + (alpha * 1.0)
+                        task.wait()
+                    end
+                    if flyCurrentState ~= true or not mobileFlyOn then return end
+                    currentStage = 2
+                    startTime = tick()
+                    while tick() - startTime < 0.254 and flyCurrentState == true and mobileFlyOn do
+                        local alpha = (tick() - startTime) / 0.254
+                        currentFlyMultiplier = 2.0 + (alpha * 3.0)
+                        task.wait()
+                    end
+                    if flyCurrentState ~= true or not mobileFlyOn then return end
+                    currentStage = 3
+                    applyStage3Shake()
+                    local stage3StartTime = tick()
+                    while flyCurrentState == true and mobileFlyOn do
+                        local elapsed = tick() - stage3StartTime
+                        stage3TimeElapsed = elapsed
+                        local alpha = math.min(elapsed / 5, 1)
+                        currentFlyMultiplier = 5.0 + (alpha * 5.0)
+                        task.wait()
+                    end
+                end)
+                return
+            end
+            if atkHolding then
+                clearFlyTracks(0.5)
+                if currentStage == 3 then currentFlyMultiplier = 10.0 end
+                return
+            end
+            clearFlyTracks(0.5)
+            flyAnimTask = task.spawn(function()
+                if currentStage == 3 then
+                    if not mobileFlyOn then return end
+                    local activeTrackId = (flyAnimVersion == 3) and WALK_3_V3_ID or ((flyAnimVersion == 2) and WALK_3_V2_ID or WALK_3_ID)
+                    local track = playFlyAnim(activeTrackId, (flyAnimVersion ~= 1), 0.5)
+                    if track then
+                        track.Priority = Enum.AnimationPriority.Action
+                        runCustomFlyLoop(track)
+                    end
+                    applyStage3Shake()
+                    return
+                end
+                currentStage = 1
+                stage3TimeElapsed = 0
+                local startTime = tick()
+                local duration = 0.173
+                local t1 = playFlyAnim(WALK_1_ID, false, 0.5)
+                if t1 then t1:AdjustSpeed(2.6) end
+                while tick() - startTime < duration and mobileFlyOn do
+                    local alpha = (tick() - startTime) / duration
+                    currentFlyMultiplier = 1.0 + (alpha * 1.0)
+                    task.wait()
+                end
+                if not mobileFlyOn then return end
+                if t1 then t1:Stop(0.5) end
+                currentStage = 2
+                startTime = tick()
+                local duration = 0.254
+                local t2 = playFlyAnim(WALK_2_ID, false, 0.5)
+                if t2 then t2:AdjustSpeed(2.6) end
+                while tick() - startTime < duration and mobileFlyOn do
+                    local alpha = (tick() - startTime) / duration
+                    currentFlyMultiplier = 2.0 + (alpha * 3.0)
+                    task.wait()
+                end
+                if not mobileFlyOn then return end
+                if t2 then t2:Stop(0.5) end
+                currentStage = 3
+                if not mobileFlyOn then return end
+                local activeTrackId = (flyAnimVersion == 3) and WALK_3_V3_ID or ((flyAnimVersion == 2) and WALK_3_V2_ID or WALK_3_ID)
+                local track = playFlyAnim(activeTrackId, (flyAnimVersion ~= 1), 0.5)
+                if track then
+                    track.Priority = Enum.AnimationPriority.Action
+                    runCustomFlyLoop(track)
+                end
+                applyStage3Shake()
+                local stage3StartTime = tick()
+                local accelerationDuration = 5
+                local stage3StartMult = 5.0
+                local stage3MaxMult = 10.0
+                while flyCurrentState == true and mobileFlyOn do
+                    local elapsed = tick() - stage3StartTime
+                    stage3TimeElapsed = elapsed
+                    local alpha = math.min(elapsed / accelerationDuration, 1)
+                    currentFlyMultiplier = stage3StartMult + (alpha * (stage3MaxMult - stage3StartMult))
+                    task.wait()
+                end
+            end)
+        end
+    end
+end
+
+local function getFlyMovementDirection()
+	local character = LocalPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local camera = Workspace.CurrentCamera
+	if not humanoid or not camera then return Vector3.new() end
+	local moveDirection = Vector3.new()
+	local keyboardInputActive = false
+	if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + camera.CFrame.LookVector keyboardInputActive = true end
+	if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - camera.CFrame.LookVector keyboardInputActive = true end
+	if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - camera.CFrame.RightVector keyboardInputActive = true end
+	if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + camera.CFrame.RightVector keyboardInputActive = true end
+	local verticalDir = Vector3.new(0, 0, 0)
+	if UserInputService:IsKeyDown(Enum.KeyCode.Space) then local upBoost = (currentStage == 3) and 2.0 or 1.0; verticalDir = verticalDir + Vector3.new(0, 1 * upBoost, 0) keyboardInputActive = true end
+	if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then local downBoost = (currentStage == 3) and 10.0 or 1.0; verticalDir = verticalDir - Vector3.new(0, 1 * downBoost, 0) keyboardInputActive = true end
+	moveDirection = moveDirection + verticalDir
+	if not keyboardInputActive and humanoid.MoveDirection.Magnitude > 0.05 then
+		local joystickInput = humanoid.MoveDirection
+		local cameraLookFlat = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z).Unit
+		local cameraRightFlat = Vector3.new(camera.CFrame.RightVector.X, 0, camera.CFrame.RightVector.Z).Unit
+		local forwardComponent = joystickInput:Dot(cameraLookFlat)
+		local rightComponent = joystickInput:Dot(cameraRightFlat)
+		moveDirection = moveDirection + (camera.CFrame.RightVector * rightComponent)
+		moveDirection = moveDirection + (camera.CFrame.LookVector * forwardComponent)
+	end
+	return moveDirection.Magnitude > 0 and moveDirection.Unit or Vector3.new()
+end
+
+-- Landing sequence ID so we can invalidate stale coroutines
+local landingSessionId = 0
+
+-- REFINED FE GROUND LANDING
+-- No anchoring. Uses tick-based loop for clean fly-off detection.
+-- Hard-sets root.CFrame every Heartbeat tick to pin position server-visibly via physics replication.
+local function handleLanding(hitPosition, hitInstance)
+    if isLanding or landingCooldown or not groundLandingEnabled then return end
+    if (currentStage >= 2 or atkHolding) then
+        isLanding = true
+        landingCooldown = true
+        landingSessionId = landingSessionId + 1
+        local mySession = landingSessionId
+        descentStartHeight = nil
+        clearFlyTracks(0.1)
+
+        local character = LocalPlayer.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+        local groundColor = hitInstance and hitInstance.Color or Color3.fromRGB(100, 100, 100)
+        local groundMaterial = hitInstance and hitInstance.Material or Enum.Material.Plastic
+        local effectiveMult = atkHolding and (12.0 * ATTACK_FLY_SPEED_MULTIPLIER) or currentFlyMultiplier
+        local intensity = (effectiveMult / 5)
+
+        spawnEarthquake(hitPosition, groundColor, groundMaterial, intensity)
+        applyShake(intensity * 1.5, 0.8)
+
+        -- Zero out velocity immediately
+        if flyBodyVelocity then flyBodyVelocity.velocity = Vector3.new(0, 0, 0) end
+        if root then
+            root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+        end
+
+        -- Compute target landing CFrame
+        local targetLandCFrame
+        if root and humanoid then
+            local rootOffset = (root.Size.Y / 2) + humanoid.HipHeight
+            local landPos = hitPosition + Vector3.new(0, rootOffset, 0)
+            local lookDir = root.CFrame.LookVector
+            local flatLook = Vector3.new(lookDir.X, 0, lookDir.Z)
+            if flatLook.Magnitude < 0.01 then flatLook = Vector3.new(0, 0, -1) else flatLook = flatLook.Unit end
+            targetLandCFrame = CFrame.lookAt(landPos, landPos + flatLook)
+            -- Hard-set immediately (pins server-side via physics replication, no anchor needed)
+            root.CFrame = targetLandCFrame
+        end
+
+        -- Abort if fly was turned off before we even play the anim
+        if not mobileFlyOn or landingSessionId ~= mySession then
+            if humanoid then humanoid.AutoRotate = true; humanoid.PlatformStand = false end
+            isLanding = false
+            task.delay(0.15, function() landingCooldown = false end)
+            return
+        end
+
+        local landTrack = playFlyAnim("rbxassetid://79698004825744", false, 0.1)
+        if landTrack then
+            landTrack:AdjustSpeed(2)
+
+            -- Tick-based wait loop instead of task.wait — checks fly-off every Heartbeat
+            local animHalfDur = math.max(0, (landTrack.Length / 2) - 0.5)
+            local waitStart = tick()
+            -- Pin position every Heartbeat during the animation so others see it correctly
+            local pinConnection = RunService.Heartbeat:Connect(function()
+                if not mobileFlyOn or landingSessionId ~= mySession then return end
+                if root and targetLandCFrame then
+                    root.CFrame = targetLandCFrame
+                    root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                end
+            end)
+
+            -- Tick-based polling loop
+            while tick() - waitStart < animHalfDur do
+                RunService.Heartbeat:Wait()
+                if not mobileFlyOn or landingSessionId ~= mySession then break end
+            end
+            pinConnection:Disconnect()
+
+            -- Abort if fly was turned off during wait
+            if not mobileFlyOn or landingSessionId ~= mySession then
+                clearFlyTracks(0)
+                if humanoid then humanoid.AutoRotate = true; humanoid.PlatformStand = false end
+                isLanding = false
+                task.delay(0.15, function() landingCooldown = false end)
+                return
+            end
+
+            currentStage = 1
+
+            -- Only play post-land animations while fly is still on
+            if mobileFlyOn and landingSessionId == mySession then
+                if foolToggled and humanoid then
+                    local a = Instance.new("Animation"); a.AnimationId = FOOL_ANIM_ID
+                    foolTrack = humanoid:LoadAnimation(a)
+                    foolTrack.Priority = Enum.AnimationPriority.Action3
+                    foolTrack.Looped = true
+                    foolTrack:Play(0.5)
+                elseif thraxsaToggled then
+                    launchThraxsansLoop()
+                elseif kingToggled and humanoid then
+                    local a = Instance.new("Animation"); a.AnimationId = KING_ANIM_ID
+                    kingTrack = humanoid:LoadAnimation(a)
+                    kingTrack.Priority = Enum.AnimationPriority.Action3
+                    customFlyLoopTask = task.spawn(function()
+                        local START_TIME = 5.2
+                        local END_TIME = 5.8
+                        local PLAYBACK_SPEED = 0.3
+                        kingTrack:Play()
+                        while kingToggled and mobileFlyOn and not isLanding do
+                            kingTrack:AdjustSpeed(PLAYBACK_SPEED)
+                            kingTrack.TimePosition = START_TIME
+                            while kingTrack.TimePosition < END_TIME and kingToggled and mobileFlyOn and not isLanding do RunService.RenderStepped:Wait() end
+                            if not kingToggled or isLanding or not mobileFlyOn then break end
+                            kingTrack:AdjustSpeed(-PLAYBACK_SPEED)
+                            kingTrack.TimePosition = END_TIME
+                            while kingTrack.TimePosition > START_TIME and kingToggled and mobileFlyOn and not isLanding do RunService.RenderStepped:Wait() end
+                        end
+                        if not mobileFlyOn then
+                            pcall(function() if kingTrack then kingTrack:Stop(0) end end)
+                        end
+                    end)
+                else
+                    playFlyAnim(FLY_IDLE_OPTIONS[flyIdleVersion], true, 0.45)
+                end
+            end
+
+            -- Short hold after post-land anim starts (tick-based)
+            local holdStart = tick()
+            while tick() - holdStart < 0.5 do
+                RunService.Heartbeat:Wait()
+                if not mobileFlyOn or landingSessionId ~= mySession then break end
+            end
+
+            -- Abort if fly was turned off during hold
+            if not mobileFlyOn or landingSessionId ~= mySession then
+                clearFlyTracks(0)
+                if humanoid then humanoid.AutoRotate = true; humanoid.PlatformStand = false end
+                isLanding = false
+                task.delay(0.15, function() landingCooldown = false end)
+                return
+            end
+        end
+
+        isLanding = false
+        flyCurrentState = nil
+        task.delay(0.3, function() landingCooldown = false end)
+    end
+end
+
+local function stopFly()
+    -- Immediately abort any ongoing landing sequence so the player can walk right away
+    landingSessionId = landingSessionId + 1
+    if isLanding then
+        isLanding = false
+        landingCooldown = false
+        local _c = LocalPlayer.Character
+        local _h = _c and _c:FindFirstChildOfClass("Humanoid")
+        if _h then _h.AutoRotate = true; _h.PlatformStand = false end
+        clearFlyTracks(0)
+    end
+	if flyBodyGyro then flyBodyGyro:Destroy() end
+	if flyBodyVelocity then flyBodyVelocity:Destroy() end
+	if flyConnections.camPart then flyConnections.camPart:Destroy() end
+	clearFlyTracks(0)
+	if foolTrack then foolTrack:Stop(0) foolTrack = nil end
+	if thraxsaTrack then thraxsaTrack:Stop(0) thraxsaTrack = nil end
+	if kingTrack then kingTrack:Stop(0) kingTrack = nil end
+	foolToggled = false; thraxsaToggled = false; kingToggled = false
+	foolStroke.Color = Color3.fromRGB(60, 60, 60)
+	thraxsaStroke.Color = Color3.fromRGB(60, 60, 60)
+	kingStroke.Color = Color3.fromRGB(60, 60, 60)
+	-- Stop choose death if active
+	if chooseDeathToggled then
+		chooseDeathToggled = false
+		chooseDeathStroke.Color = Color3.fromRGB(60, 60, 60)
+		if chooseDeathLoopTask then pcall(function() task.cancel(chooseDeathLoopTask) end) chooseDeathLoopTask = nil end
+		if chooseDeathTrack then pcall(function() chooseDeathTrack:Stop(0) end) chooseDeathTrack = nil end
+	end
+	flyCurrentState = nil
+	currentFlyMultiplier = 1.0
+	currentStage = 1
+	stage3TimeElapsed = 0
+	totalFlightTimeElapsed = 0
+	descentStartHeight = nil
+	if mobileFlyInvisiblePart then mobileFlyInvisiblePart:Destroy() mobileFlyInvisiblePart = nil end
+	local character = LocalPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local camera = Workspace.CurrentCamera
+	if camera and humanoid then
+		camera.CameraSubject = humanoid
+		camera.CameraType = Enum.CameraType.Custom
+		humanoid.AutoRotate = true
+		humanoid.PlatformStand = false
+		TweenService:Create(camera, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = 70}):Play()
+	end
+	if flyConnections.flyLoop then flyConnections.flyLoop:Disconnect(); flyConnections.flyLoop = nil end
+	-- Final safety sweep: cancel any tasks and stop any tracks that may have slipped through
+	task.delay(0.05, function()
+		if not mobileFlyOn then
+			clearFlyTracks(0)
+			if foolTrack then pcall(function() foolTrack:Stop(0) end) foolTrack = nil end
+			if thraxsaTrack then pcall(function() thraxsaTrack:Stop(0) end) thraxsaTrack = nil end
+			if kingTrack then pcall(function() kingTrack:Stop(0) end) kingTrack = nil end
+		end
+	end)
+end
+
+local function startFly()
+	local character = LocalPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local head = character and character:FindFirstChild("Head")
+	local camera = Workspace.CurrentCamera
+	if not root or not humanoid or not camera then return end
+
+    if humanoid then
+        local warmUpAnim = Instance.new("Animation")
+        warmUpAnim.AnimationId = "rbxassetid://79698004825744"
+        local warmUpTrack = humanoid:LoadAnimation(warmUpAnim)
+        warmUpTrack:Play()
+        warmUpTrack:Stop(0)
+    end
+
+	if not hasPerformedInitialGhostLand then
+		task.spawn(function()
+			root.Anchored = true
+			local anim = Instance.new("Animation"); anim.AnimationId = "rbxassetid://114354347367406"
+			local t = humanoid:LoadAnimation(anim); t:Play(); t:Stop()
+			RunService.Heartbeat:Wait(); root.Anchored = false; hasPerformedInitialGhostLand = true
+		end)
+	end
+	humanoid.AutoRotate = false
+	humanoid.PlatformStand = true
+	if not mobileFlyOn or not mobileFlyInvisiblePart then
+		mobileFlyInvisiblePart = Instance.new("Part"); mobileFlyInvisiblePart.Name = "MobileFlyGroundPart"; mobileFlyInvisiblePart.Size = Vector3.new(10, 10, 10); mobileFlyInvisiblePart.Transparency = 1; mobileFlyInvisiblePart.CanCollide = false; mobileFlyInvisiblePart.Anchored = false; mobileFlyInvisiblePart.Massless = true; mobileFlyInvisiblePart.Parent = workspace
+	end
+	flyBodyGyro = Instance.new("BodyGyro"); flyBodyGyro.P = 40000; flyBodyGyro.D = 500; flyBodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9); flyBodyGyro.Parent = root
+	flyBodyVelocity = Instance.new("BodyVelocity"); flyBodyVelocity.velocity = Vector3.zero; flyBodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9); flyBodyVelocity.Parent = root
+	if head then
+		local camPart = Instance.new("Part"); camPart.Name = "CamFocus"; camPart.Transparency = 1; camPart.CanCollide = false; camPart.Massless = true; camPart.Size = Vector3.new(0.1, 0.1, 0.1); camPart.Parent = character
+		local weld = Instance.new("Weld"); weld.Part0 = head; weld.Part1 = camPart; weld.C0 = CFrame.new(0, 0.5, 0); weld.Parent = camPart
+		camera.CameraSubject = camPart
+		flyConnections.camPart = camPart
+	end
+
+	totalFlightTimeElapsed = 0
+	flyConnections.flyLoop = RunService.RenderStepped:Connect(function(dt)
+		if not mobileFlyOn or not root or not camera or isLanding or isSlapping then
+			if currentStage3ShakeIntensity > 0 then
+				currentStage3ShakeIntensity = math.max(currentStage3ShakeIntensity - (dt * 4), 0)
+				if currentStage3ShakeIntensity > 0 then
+					local shake = Vector3.new(
+						math.random(-100, 100)/1000 * currentStage3ShakeIntensity,
+						math.random(-100, 100)/1000 * currentStage3ShakeIntensity,
+						math.random(-100, 100)/1000 * currentStage3ShakeIntensity
+					)
+					camera.CFrame = camera.CFrame * CFrame.new(shake)
+				end
+			end
+			return
+		end
+
+		totalFlightTimeElapsed = totalFlightTimeElapsed + dt
+
+		if currentStage ~= 3 or not flyCurrentState then
+			if currentStage3ShakeIntensity > 0 then
+				currentStage3ShakeIntensity = math.max(currentStage3ShakeIntensity - (dt * 4), 0)
+				local shake = Vector3.new(
+					math.random(-100, 100)/1000 * currentStage3ShakeIntensity,
+					math.random(-100, 100)/1000 * currentStage3ShakeIntensity,
+					math.random(-100, 100)/1000 * currentStage3ShakeIntensity
+				)
+				camera.CFrame = camera.CFrame * CFrame.new(shake)
+			end
+		end
+
+		local moveDir = getFlyMovementDirection()
+		local filterList = {character, mobileFlyInvisiblePart}
+		for _, p in ipairs(Players:GetPlayers()) do
+			if p.Character then table.insert(filterList, p.Character) end
+		end
+		local rayCastParams = RaycastParams.new(); rayCastParams.FilterDescendantsInstances = filterList; rayCastParams.FilterType = Enum.RaycastFilterType.Exclude
+
+		local currentVelY = flyBodyVelocity and flyBodyVelocity.velocity.Y or root.AssemblyLinearVelocity.Y
+		local isMovingDown = currentVelY < -5
+
+		if isMovingDown then
+			if descentStartHeight == nil then
+				local longRay = workspace:Raycast(root.Position, Vector3.new(0, -500, 0), rayCastParams)
+				descentStartHeight = longRay and (root.Position.Y - longRay.Position.Y) or 999
+			end
+		else
+			descentStartHeight = nil
+		end
+
+		local dynamicDetectionDist = math.max(3, ((flyBodyVelocity and flyBodyVelocity.velocity.Magnitude or root.AssemblyLinearVelocity.Magnitude) * dt * 0.75) + 1)
+		local groundRay = workspace:Raycast(root.Position, Vector3.new(0, -dynamicDetectionDist, 0), rayCastParams)
+
+		if groundRay and groundRay.Instance and groundLandingEnabled and isMovingDown then
+			if groundRay.Instance.CanCollide and groundRay.Instance.Transparency <= 0.75 and (currentStage >= 2 or atkHolding) then
+				local currentSpeed = flyBodyVelocity and flyBodyVelocity.velocity.Magnitude or root.AssemblyLinearVelocity.Magnitude
+				if currentSpeed > 30 and (descentStartHeight or 0) >= MIN_DESCENT_FOR_LANDING then
+					handleLanding(groundRay.Position, groundRay.Instance)
+				end
+			end
+		end
+
+		if moveDir.Magnitude > 0 then
+			local speed = (baseFlySpeed * currentFlyMultiplier) * FLY_SPEED_MODIFIERS[flySpeedMode]
+			if atkHolding then speed = (baseFlySpeed * 12.0) * FLY_SPEED_MODIFIERS[flySpeedMode] if attackStrikeInProgress then speed = speed / 4 end end
+			flyBodyVelocity.velocity = moveDir * speed
+			-- SHIFTLOCK / ROTATION TRACKING
+			-- shiftlockEnabled: body faces camera direction including full pitch (look up/down freely)
+			-- normal: body faces movement direction (cameraFollowOn) or flat movement direction
+			if shiftlockEnabled then
+				-- Full camera-aligned rotation including vertical look
+				local targetRotation = CFrame.lookAt(root.Position, root.Position + camera.CFrame.LookVector)
+				flyBodyGyro.CFrame = flyBodyGyro.CFrame:Lerp(targetRotation, 0.15)
+			elseif cameraFollowOn then
+				local targetRotation = CFrame.lookAt(root.Position, root.Position + moveDir)
+				flyBodyGyro.CFrame = flyBodyGyro.CFrame:Lerp(targetRotation, 0.15)
+			else
+				local flatMove = Vector3.new(moveDir.X, 0, moveDir.Z)
+				if flatMove.Magnitude > 0.05 then
+					local targetFlatRotation = CFrame.lookAt(root.Position, root.Position + flatMove.Unit)
+					flyBodyGyro.CFrame = flyBodyGyro.CFrame:Lerp(targetFlatRotation, 0.15)
+				end
+			end
+			updateFlyState(true)
+			if (currentStage == 3 and not (foolToggled or thraxsaToggled or kingToggled)) or atkHolding or (currentStage == 3 and (foolToggled or thraxsaToggled or kingToggled)) then
+				if camera.FieldOfView < 89.9 then TweenService:Create(camera, TweenInfo.new(0.35), {FieldOfView = 90}):Play() end
+			else
+				if camera.FieldOfView > 70.1 then TweenService:Create(camera, TweenInfo.new(0.7), {FieldOfView = 70}):Play() end
+			end
+		else
+			flyBodyVelocity.velocity = Vector3.zero
+			-- SHIFTLOCK IDLE: always face camera direction including pitch when idle too
+			if shiftlockEnabled then
+				local targetRotation = CFrame.lookAt(root.Position, root.Position + camera.CFrame.LookVector)
+				flyBodyGyro.CFrame = flyBodyGyro.CFrame:Lerp(targetRotation, 0.1)
+			elseif cameraFollowOn then
+				local targetIdleRotation = CFrame.lookAt(root.Position, root.Position + camera.CFrame.LookVector)
+				flyBodyGyro.CFrame = flyBodyGyro.CFrame:Lerp(targetIdleRotation, 0.1)
+			end
+			updateFlyState(false)
+			if camera.FieldOfView ~= 70 then TweenService:Create(camera, TweenInfo.new(0.7), {FieldOfView = 70}):Play() end
+		end
+		pcall(function()
+			if mobileFlyInvisiblePart and root then
+				local verticalIdleAdjustment = (moveDir.Magnitude == 0) and -6.5 or -5
+				mobileFlyInvisiblePart.CFrame = root.CFrame * CFrame.new(0, -(root.Size.Y / 2) + verticalIdleAdjustment, 0)
+			end
+		end)
+	end)
+	updateFlyState(getFlyMovementDirection().Magnitude > 0)
+end
+
+-- Initialize Main Toggle with Smart Draggable
+mobileFlyToggle.MouseButton1Click:Connect(function() end)
+makeSmartDraggable(mobileFlyToggle, function()
+	mobileFlyOn = not mobileFlyOn
+	flyText.Text = "Thragg: " .. (mobileFlyOn and "ON" or "OFF")
+	-- Respect buttonsHidden: only show containers when fly turns ON and buttons are not hidden
+	local shouldShow = mobileFlyOn and not buttonsHidden
+	buttonContainer.Visible = shouldShow
+	topButtonContainer.Visible = shouldShow
+	settingButton.Visible = mobileFlyOn
+	if mobileFlyOn then
+		previousNoclipState = noclipOn; setNoclip(true); startFly()
+		-- PERSISTENT FLING: if fling was on before fly toggled off, restart the loop now
+		if flingEnabled then startFlingLoop() end
+	else
+		stopFly(); setNoclip(previousNoclipState); flingEnabled = false; stopFlingLoop(); settingsGui.Visible = false
+	end
+end, false)
+
+-- Banish/Fling GUI Logic (Updated with Safe Executor UI Parenting Fallback)
+local u2 = { ['1'] = Instance.new('ScreenGui'), }
+u2['1'].Parent = targetParent
+u2['1'].Enabled = false
+u2['2'] = Instance.new('Frame', u2['1']); u2['2'].BorderSizePixel = 0; u2['2'].BackgroundColor3 = Color3.fromRGB(254, 199, 255); u2['2'].Size = UDim2.new(0, 316, 0, 128); u2['2'].Position = UDim2.new(0.5, -155, 0.5, -62)
+u2['5'] = Instance.new('ImageLabel', u2['2']); u2['5'].BorderSizePixel = 0; u2['5'].BackgroundColor3 = Color3.fromRGB(255, 255, 255); u2['5'].Image = 'rbxassetid://97587406223179'; u2['5'].Size = UDim2.new(0, 316, 0, 142); u2['5'].Position = UDim2.new(0, 0, -0.10938, 0)
+local TextBox = Instance.new('TextBox', u2['5']); TextBox.PlaceholderText = 'shortened name/display'; TextBox.Size = UDim2.new(0.9, -20, 0.3, -10); TextBox.Position = UDim2.new(0.05, 0, 0.3, 0); TextBox.Text = ''; TextBox.BackgroundColor3 = Color3.fromRGB(113, 27, 255); TextBox.TextColor3 = Color3.new(1,1,1)
+local TextButton = Instance.new('TextButton', u2['5']); TextButton.Size = UDim2.new(0.4, 0, 0.25, 0); TextButton.Position = UDim2.new(0.3, 0, 0.65, 0); TextButton.Text = 'banish >:3'; TextButton.BackgroundColor3 = Color3.fromRGB(255, 232, 204)
+
+local function getTarget(p37)
+	local v38 = p37:lower()
+	for _, v43 in pairs(Players:GetPlayers()) do if v43 ~= LocalPlayer then if v43.Name:lower():match('^' .. v38) or v43.DisplayName:lower():match('^' .. v38) then return v43 end end end
+end
+
+TextButton.MouseButton1Click:Connect(function()
+    local p49 = getTarget(TextBox.Text)
+    if p49 then
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local targetHrp = p49.Character and p49.Character:FindFirstChild("HumanoidRootPart")
+        if hrp and targetHrp then
+            local oldPos = hrp.CFrame
+            workspace.FallenPartsDestroyHeight = -99999
+            local bv = Instance.new('BodyVelocity', hrp); bv.Velocity = Vector3.new(450000000, 4500000000, 450000000); bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            local start = tick()
+            while tick() - start < 1.5 do hrp.CFrame = targetHrp.CFrame RunService.Heartbeat:Wait() end
+            bv:Destroy(); hrp.CFrame = oldPos; workspace.FallenPartsDestroyHeight = getgenv().FPDH
+        end
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(character)
+	rebuildNoclipCache()
+    task.wait(0.1)
+	if mobileFlyOn then
+		task.wait(0.5); stopFly(); hasPerformedInitialGhostLand = false; isLanding = false; landingCooldown = false;
+        atkHolding = false; attackIsMoving = false; attackStrikeInProgress = false; flyCurrentState = nil;
+        currentFlyMultiplier = 1.0; currentStage = 1; stage3TimeElapsed = 0; totalFlightTimeElapsed = 0; isSlapping = false
+		task.wait(0.3); setNoclip(true); startFly(); if flingEnabled then startFlingLoop() end
+	end
+end)
+
+-- Initialize
+if LocalPlayer.Character then rebuildNoclipCache() end
+for _, obj in ipairs(workspace:GetDescendants()) do if obj:IsA("ProximityPrompt") then obj.HoldDuration = 0 end end
+
+task.spawn(function()
+	while true do
+		task.wait(2)
+		if (flingEnabled or isSlapping) and (not flingConnection or not flingConnection.Connected) then startFlingLoop() end
+	end
+end)
+
+return u2['1']
